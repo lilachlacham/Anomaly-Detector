@@ -1,8 +1,4 @@
-/*
- * animaly_detection_util.cpp
- *
- * Author: 315097113 Noam Pdut
- */
+//Author: 315097113 Noam Pdut
 
 #include "anomaly_detection_util.h"
 #include <cstdlib>

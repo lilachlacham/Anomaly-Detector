@@ -1,4 +1,4 @@
-
+//Author: 315097113 Noam Pdut
 #include "SimpleAnomalyDetector.h"
 #include <map>
 
@@ -25,7 +25,7 @@ void deletePoint(Point** p, int sizeArray) {
     for (int i = 0; i < sizeArray; i++) {
         delete p[i];
     }
-    delete p;
+    delete [] p;
 }
 
 /*

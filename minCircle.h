@@ -1,4 +1,4 @@
-
+//Author: 315097113 Noam Pdut
 #ifndef MINCIRCLE_H_
 #define MINCIRCLE_H_
 
@@ -22,6 +22,7 @@ public:
 // --------------------------------------
 
 Circle findMinCircle(Point** points,size_t size);
+bool ifPointIsInCircle (Circle circle, Point* point);
 
 // you can add here additional methods
 

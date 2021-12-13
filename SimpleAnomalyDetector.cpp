@@ -3,9 +3,10 @@
 #include <map>
 
 SimpleAnomalyDetector::SimpleAnomalyDetector() {
+
 }
 
-SimpleAnomalyDetector::~SimpleAnomalyDetector() = default;
+SimpleAnomalyDetector::~SimpleAnomalyDetector() {}
 
 /*
  * convert the vectors of the two correlated fetters into Points array.
@@ -26,6 +27,22 @@ void deletePoint(Point** p, int sizeArray) {
         delete p[i];
     }
     delete [] p;
+}
+
+void SimpleAnomalyDetector::createCorreletedFeature(const TimeSeries& ts, int sizeOfVector, float m, int c,
+                                                    string feature1, string feature2,Point** pointArr) {
+    map<string,vector<float>> data= ts.getMap();
+    //check if there is correlation with feature i, and if so, check if it is higher than 0.9.
+    if(c != -1 && m >= 0.9) {
+        //create correlated feature struct and push it to cf vector member.
+        correlatedFeatures cfTemp;
+        cfTemp.feature1 = feature1;
+        cfTemp.feature2 = feature2;
+        cfTemp.corrlation = m;
+        cfTemp.lin_reg = linear_reg(pointArr, sizeOfVector);
+        cfTemp.threshold = 0.9;
+        SimpleAnomalyDetector::cf.push_back(cfTemp);
+    }
 }
 
 /*
@@ -57,25 +74,22 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries& ts) {
                c = j;
            }
         }
-        //check if there is correlation with feature i, and if so, check if it is higher than 0.9.
-        if(c != -1 && m > 0.9) {
-            //create correlated feature struct and push it to cf vector member.
-            correlatedFeatures cfTemp;
-            cfTemp.feature1 = vectorOfFeatures[i];
-            cfTemp.feature2 = vectorOfFeatures[c];
-            cfTemp.corrlation = m;
-            //create array of points, to get the linear reg.
-            pointArr = vectorsToPoints(data[vectorOfFeatures[i]], data[vectorOfFeatures[c]]);
-            cfTemp.lin_reg = linear_reg(pointArr, sizeOfVector);
-            cfTemp.threshold = 0.9;
-            SimpleAnomalyDetector::cf.push_back(cfTemp);
-        }
+        //create array of points, to get the linear reg.
+        pointArr = vectorsToPoints(data[vectorOfFeatures[i]], data[vectorOfFeatures[c]]);
+        createCorreletedFeature(ts, sizeOfVector, m, c, vectorOfFeatures[i], vectorOfFeatures[c], pointArr);
     }
     //update the thresholds of every correlated features.
     SimpleAnomalyDetector::maxOffset(ts);
     //delete the points array.
     deletePoint(pointArr, sizeOfVector);
 }
+
+bool SimpleAnomalyDetector::checkIfAnomalous(float x, float y, correlatedFeatures tempCF) {
+    //get the dev between the excepted y and the current y.
+    float temp = abs(y-tempCF.lin_reg.f(x));
+    return (temp >= tempCF.threshold);
+}
+
 /*
  * detect all the deviations of the Time Series, by checking for every row if there is deviation between two correlated
  * features.
@@ -93,14 +107,21 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries& ts) {
             //get the x,y values of the two features in the current line.
             float x = data[cf[j].feature1][i];
             float y = data[cf[j].feature2][i];
-            //get the dev between the excepted y and the current y.
+
+            //check if there is deviation
+            if (checkIfAnomalous(x,y,cf[j])) {
+                //create an anomaly report and add it into a reports vector.
+                AnomalyReport report = AnomalyReport(cf[j].feature1+ "-" +cf[j].feature2, i+1);
+                reportsVector.push_back(report);
+            }
+/*            //get the dev between the excepted y and the current y.
             float temp = abs(y-cf[j].lin_reg.f(x));
             //check if there is deviation.
             if (temp >= cf[j].threshold) {
                 //create an anomaly report and add it into a reports vector.
                 AnomalyReport report = AnomalyReport(cf[j].feature1+ "-" +cf[j].feature2, i+1);
                 reportsVector.push_back(report);
-            }
+            }*/
         }
     }
     return reportsVector;

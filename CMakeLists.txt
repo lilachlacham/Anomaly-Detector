@@ -14,4 +14,6 @@ add_executable(Anomaly_Detector MainTrain.cpp
         anomaly_detection_util.cpp
         anomaly_detection_util.h
         minCircle.cpp
-        minCircle.h)
+        minCircle.h
+        HybridAnomalyDetector.cpp
+        HybridAnomalyDetector.h)

@@ -1,3 +1,4 @@
+//Author: 315097113 Noam Pdut
 #include "HybridAnomalyDetector.h"
 
 HybridAnomalyDetector::HybridAnomalyDetector():SimpleAnomalyDetector() {}

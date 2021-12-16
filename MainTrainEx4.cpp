@@ -1,7 +1,7 @@
 /*
  * MainTrain.cpp
  *
- *  Created on: 11 баечЧ 2020
+ *  Created on: 11 пїЅпїЅпїЅпїЅпїЅ 2020
  *      Author: Eli
  */
 
@@ -93,67 +93,69 @@ void checkCorrelation(correlatedFeatures c,string f1, string f2, float a, float 
 }
 
 int main(){
-	srand (time(NULL));
-	float a1=1+rand()%10, b1=-50+rand()%100;
-	float a2=1+rand()%20 , b2=-50+rand()%100;
-	float a3=1+rand()%40 , b3=-50+rand()%100;
+    for (int i = 0; i< 200; i++) {
+        srand(time(NULL));
+        float a1 = 1 + rand() % 10, b1 = -50 + rand() % 100;
+        float a2 = 1 + rand() % 20, b2 = -50 + rand() % 100;
+        float a3 = 1 + rand() % 40, b3 = -50 + rand() % 100;
 
 
-	// test the learned model: (40 points)
-	// expected correlations:
-	//	A-B: y=a1*x+b1
-	//	C-D: y=a2*x+b2
-	//	E-F: y=a3*x+b3
+        // test the learned model: (40 points)
+        // expected correlations:
+        //	A-B: y=a1*x+b1
+        //	C-D: y=a2*x+b2
+        //	E-F: y=a3*x+b3
 
-	generateTrainCSV(a1,b1,a2,b2,a3,b3);
-	TimeSeries ts("trainFile.csv");
-	HybridAnomalyDetector ad;
-	ad.learnNormal(ts);
-	vector<correlatedFeatures> cf=ad.getNormalModel();
+        generateTrainCSV(a1, b1, a2, b2, a3, b3);
+        TimeSeries ts("trainFile.csv");
+        HybridAnomalyDetector ad;
+        ad.learnNormal(ts);
+        vector<correlatedFeatures> cf = ad.getNormalModel();
 
-	if(cf.size()!=3)
-		cout<<"wrong size of correlated features (-40)"<<endl;
-	else
-	for_each(cf.begin(),cf.end(),[&a1,&b1,&a2,&b2,&a3,&b3](correlatedFeatures c){
-		checkCorrelation(c,"A","B",a1,b1); // 10 points
-		checkCorrelation(c,"C","D",a2,b2); // 10 points
-		checkCorrelation(c,"E","F",a3,b3); // 20 points
-	});
+        if (cf.size() != 3)
+            cout << "wrong size of correlated features (-40)" << endl;
+        else
+            for_each(cf.begin(), cf.end(), [&a1, &b1, &a2, &b2, &a3, &b3](correlatedFeatures c) {
+                checkCorrelation(c, "A", "B", a1, b1); // 10 points
+                checkCorrelation(c, "C", "D", a2, b2); // 10 points
+                checkCorrelation(c, "E", "F", a3, b3); // 20 points
+            });
 
-	// test the anomaly detector: (60 points)
-	// one simply anomaly is injected to the data
-	int anomaly1=5+rand()%90; // anomaly injected in a random time step
-	int anomaly2=5+rand()%90; // anomaly injected in a random time step
-	int anomaly3=5+rand()%90; // anomaly injected in a random time step
+        // test the anomaly detector: (60 points)
+        // one simply anomaly is injected to the data
+        int anomaly1 = 5 + rand() % 90; // anomaly injected in a random time step
+        int anomaly2 = 5 + rand() % 90; // anomaly injected in a random time step
+        int anomaly3 = 5 + rand() % 90; // anomaly injected in a random time step
 
-	anomalies.push_back(AnomalyReport("A-B",anomaly1));
-	anomalies.push_back(AnomalyReport("C-D",anomaly2));
-	anomalies.push_back(AnomalyReport("E-F",anomaly3));
+        anomalies.push_back(AnomalyReport("A-B", anomaly1));
+        anomalies.push_back(AnomalyReport("C-D", anomaly2));
+        anomalies.push_back(AnomalyReport("E-F", anomaly3));
 
-	generateTestCSV(a1,b1,a2,b2,a3,b3);
-	TimeSeries ts2("testFile.csv");
-	vector<AnomalyReport> r = ad.detect(ts2);
-	bool detected[]={false,false,false};
+        generateTestCSV(a1, b1, a2, b2, a3, b3);
+        TimeSeries ts2("testFile.csv");
+        vector<AnomalyReport> r = ad.detect(ts2);
+        bool detected[] = {false, false, false};
 
-	for_each(r.begin(),r.end(),[&detected](AnomalyReport ar){
-		if(ar.description==anomalies[0].description && ar.timeStep==anomalies[0].timeStep)
-			detected[0]=true;
-		if(ar.description==anomalies[1].description && ar.timeStep==anomalies[1].timeStep)
-			detected[1]=true;
-		if(ar.description==anomalies[2].description && ar.timeStep==anomalies[2].timeStep)
-			detected[2]=true;
-	});
+        for_each(r.begin(), r.end(), [&detected](AnomalyReport ar) {
+            if (ar.description == anomalies[0].description && ar.timeStep == anomalies[0].timeStep)
+                detected[0] = true;
+            if (ar.description == anomalies[1].description && ar.timeStep == anomalies[1].timeStep)
+                detected[1] = true;
+            if (ar.description == anomalies[2].description && ar.timeStep == anomalies[2].timeStep)
+                detected[2] = true;
+        });
 
-	int falseAlarms=r.size();
-	for(int i=0;i<3;i++)
-		if(!detected[i])
-			cout<<"an anomaly was not detected (-10)"<<endl;
-		else
-			falseAlarms--;
+        int falseAlarms = r.size();
+        for (int i = 0; i < 3; i++)
+            if (!detected[i])
+                cout << "an anomaly was not detected (-10)" << endl;
+            else
+                falseAlarms--;
 
-	if(falseAlarms>0)
-		cout<<"you have "<<falseAlarms<<" false alarms (-"<<min(30,falseAlarms*3)<<")"<<endl;
+        if (falseAlarms > 0)
+            cout << "you have " << falseAlarms << " false alarms (-" << min(30, falseAlarms * 3) << ")" << endl;
 
-	cout<<"done"<<endl;
+        cout << "done" << endl;
+    }
 	return 0;
 }

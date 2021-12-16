@@ -23,6 +23,7 @@ public:
 
 Circle findMinCircle(Point** points,size_t size);
 bool ifPointIsInCircle (Circle circle, Point* point);
+float calcDistance(Point p1, Point p2);
 
 // you can add here additional methods
 

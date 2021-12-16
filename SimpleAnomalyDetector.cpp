@@ -30,18 +30,18 @@ void deletePoint(Point** p, int sizeArray) {
 }
 
 void SimpleAnomalyDetector::createCorreletedFeature(const TimeSeries& ts, int sizeOfVector, float m, int c,
-                                                    string feature1, string feature2,Point** pointArr) {
-    map<string,vector<float>> data= ts.getMap();
+                                                    string feature1, string feature2, Point** pointArr) {
+   // map<string,vector<float>> data= ts.getMap();
     //check if there is correlation with feature i, and if so, check if it is higher than 0.9.
-    if(c != -1 && m >= 0.9) {
+    if(m > 0.9) {
         //create correlated feature struct and push it to cf vector member.
         correlatedFeatures cfTemp;
         cfTemp.feature1 = feature1;
         cfTemp.feature2 = feature2;
         cfTemp.corrlation = m;
         cfTemp.lin_reg = linear_reg(pointArr, sizeOfVector);
-        cfTemp.threshold = 0.9;
-        SimpleAnomalyDetector::cf.push_back(cfTemp);
+        cfTemp.threshold = maxOffset(pointArr, sizeOfVector, cfTemp.lin_reg) * (float)1.1;
+        cf.push_back(cfTemp);
     }
 }
 
@@ -60,7 +60,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries& ts) {
      */
     for (int i = 0; i < numberOfFeatures; i ++) {
         float m = 0;
-        int c = -1;
+        int c = 0;
         //run over all the others features.
         for (int j = i+1; j< numberOfFeatures; j++) {
             //get the vectors as array.
@@ -77,17 +77,18 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries& ts) {
         //create array of points, to get the linear reg.
         pointArr = vectorsToPoints(data[vectorOfFeatures[i]], data[vectorOfFeatures[c]]);
         createCorreletedFeature(ts, sizeOfVector, m, c, vectorOfFeatures[i], vectorOfFeatures[c], pointArr);
+        deletePoint(pointArr, sizeOfVector);
     }
     //update the thresholds of every correlated features.
-    SimpleAnomalyDetector::maxOffset(ts);
+    //SimpleAnomalyDetector::maxOffset(ts);
     //delete the points array.
-    deletePoint(pointArr, sizeOfVector);
+    //deletePoint(pointArr, sizeOfVector);
 }
 
 bool SimpleAnomalyDetector::checkIfAnomalous(float x, float y, correlatedFeatures tempCF) {
     //get the dev between the excepted y and the current y.
     float temp = abs(y-tempCF.lin_reg.f(x));
-    return (temp >= tempCF.threshold);
+    return (temp > tempCF.threshold);
 }
 
 /*
@@ -101,9 +102,9 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries& ts) {
     vector<AnomalyReport> reportsVector;
 
     //run over all the lines.
-    for( int i = 0; i < sizeOfVector; i++) {
+    for(int i = 0; i < sizeOfVector; i++) {
         //run over all the correlated features in the row
-        for( int j = 0; j < cf.size(); j++) {
+        for(int j = 0; j < cf.size(); j++) {
             //get the x,y values of the two features in the current line.
             float x = data[cf[j].feature1][i];
             float y = data[cf[j].feature2][i];
@@ -114,22 +115,27 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries& ts) {
                 AnomalyReport report = AnomalyReport(cf[j].feature1+ "-" +cf[j].feature2, i+1);
                 reportsVector.push_back(report);
             }
-/*            //get the dev between the excepted y and the current y.
-            float temp = abs(y-cf[j].lin_reg.f(x));
-            //check if there is deviation.
-            if (temp >= cf[j].threshold) {
-                //create an anomaly report and add it into a reports vector.
-                AnomalyReport report = AnomalyReport(cf[j].feature1+ "-" +cf[j].feature2, i+1);
-                reportsVector.push_back(report);
-            }*/
         }
     }
     return reportsVector;
 }
 
+float SimpleAnomalyDetector::maxOffset(Point** pointArr, int sizeOfVector, Line lin_reg) {
+    float maxOffset = 0;
+    for (int i = 0; i < sizeOfVector; i++) {
+        float y = pointArr[i]->y;
+        float x = pointArr[i]->x;
+        float temp = abs(y-lin_reg.f(x));
+        if (temp > maxOffset) {
+            maxOffset = temp;
+        }
+    }
+    return maxOffset;
+}
 /*
  * for every two correlated features, get the max offset.
  */
+/*
 void SimpleAnomalyDetector::maxOffset(const TimeSeries& ts) {
     map<string,vector<float>> data= ts.getMap();
     vector<string> vectorOfFeatures = ts.getFeatures();
@@ -140,6 +146,9 @@ void SimpleAnomalyDetector::maxOffset(const TimeSeries& ts) {
     float maxNormalOffset = 0;
     // go over the correlated features and calculate the max normal offset.
     for (int i = 0; i < numOfCorreletedFeatures; i++) {
+        if (cf[i].flag) {
+            continue;
+        }
         for(int j = 0; j < sizeOfVector; j++) {
             float x = data[cf[i].feature1][j];
             float y = data[cf[i].feature2][j];
@@ -153,4 +162,4 @@ void SimpleAnomalyDetector::maxOffset(const TimeSeries& ts) {
             cf[i].threshold = maxNormalOffset * 1.1;
         }
     }
-}
+}*/

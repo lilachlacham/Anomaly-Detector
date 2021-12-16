@@ -20,8 +20,9 @@ struct correlatedFeatures{
 
 
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
-public:
+protected:
     vector<correlatedFeatures> cf;
+public:
 	SimpleAnomalyDetector();
 	virtual ~SimpleAnomalyDetector();
 	virtual void learnNormal(const TimeSeries& ts);
@@ -31,7 +32,7 @@ public:
 	}
 
 protected:
-    void maxOffset(const TimeSeries& ts);
+    float maxOffset(Point** pointArr, int sizeOfVector, Line lin_reg);
     virtual void createCorreletedFeature(const TimeSeries& ts, int sizeOfVector, float m, int c, string feature1, string feature2,
                                                         Point** pointArr);
     virtual bool checkIfAnomalous(float x, float y, correlatedFeatures tempCF);

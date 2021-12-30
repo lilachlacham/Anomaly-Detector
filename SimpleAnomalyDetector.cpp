@@ -8,6 +8,10 @@ SimpleAnomalyDetector::SimpleAnomalyDetector() {
 
 SimpleAnomalyDetector::~SimpleAnomalyDetector() {}
 
+void SimpleAnomalyDetector::setDefaultThreshold(float newThreshold){
+    this->defaultThreshold = newThreshold;
+}
+
 /*
  * convert the vectors of the two correlated fetters into Points array.
  */
@@ -32,8 +36,8 @@ void deletePoint(Point** p, int sizeArray) {
 void SimpleAnomalyDetector::createCorreletedFeature(const TimeSeries& ts, int sizeOfVector, float m, int c,
                                                     string feature1, string feature2, Point** pointArr) {
    // map<string,vector<float>> data= ts.getMap();
-    //check if there is correlation with feature i, and if so, check if it is higher than 0.9.
-    if(m > 0.9) {
+    //check if there is correlation with feature i, and if so, check if it is higher than defaultThreshold.
+    if(m > defaultThreshold) {
         //create correlated feature struct and push it to cf vector member.
         correlatedFeatures cfTemp;
         cfTemp.feature1 = feature1;

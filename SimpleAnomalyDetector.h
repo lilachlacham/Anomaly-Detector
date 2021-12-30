@@ -22,6 +22,8 @@ struct correlatedFeatures{
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
 protected:
     vector<correlatedFeatures> cf;
+    float defaultThreshold = 0.9;
+
 public:
 	SimpleAnomalyDetector();
 	virtual ~SimpleAnomalyDetector();
@@ -30,6 +32,7 @@ public:
 	vector<correlatedFeatures> getNormalModel(){
 		return cf;
 	}
+    void setDefaultThreshold(float newThreshold);
 
 protected:
     float maxOffset(Point** pointArr, int sizeOfVector, Line lin_reg);

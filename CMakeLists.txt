@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(.)
 
 
-add_executable(Anomaly_Detector MainTrainEx4.cpp
+add_executable(Anomaly_Detector MainTrain.cpp
         timeseries.cpp
         timeseries.h
         SimpleAnomalyDetector.cpp
@@ -17,4 +17,7 @@ add_executable(Anomaly_Detector MainTrainEx4.cpp
         minCircle.h
         HybridAnomalyDetector.h
         HybridAnomalyDetector.cpp
+        CLI.cpp
+        CLI.h
+        commands.h
         )

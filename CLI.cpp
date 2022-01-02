@@ -2,29 +2,34 @@
 
 
 CLI::CLI(DefaultIO* dio) {
-    this->createCommands();
     this->dio = dio;
+    commands.push_back(new UploadCSV(dio));
+    commands.push_back(new algorithmSettings(dio));
+    commands.push_back(new detectAnomalies(dio));
+    commands.push_back(new DisplayResults(dio));
+    commands.push_back(new analyzeResult(dio));
+    commands.push_back(new endOfMenu(dio));
 }
 
 void CLI::start() {
     CurrentData currentData;
     string startOfMenu = "Welcome to the Anomaly Detection Server.\n Please choose an option:\n";
     this->dio->write(startOfMenu);
-    int numOfCommands = sizeof(this->commands)/ sizeof(Command);
-    for (int i = 0; i < numOfCommands;i++) {
-        string commandToPrint = to_string((i+1)) + ". " + this->commands[i]->description + "\n";
+    int numOfCommands = commands.size();
+    while(true) {
+        for (int i = 0; i < numOfCommands; i++) {
+            string commandToPrint = to_string((i + 1)) + ". " + this->commands[i]->description + "\n";
+        }
+        string choose = dio->read();
+        if (choose > "6" || choose < "1") {
+            this->commands[6]->execute(&currentData);
+        }
+        int intChoose = stoi(choose);
+        this->commands[intChoose]->execute(&currentData);
+        if (intChoose == 6) {
+            break;
+        }
     }
-
-    string choose = dio->read();
-    if (choose > "6" || choose < "1") {
-        exit(1);
-    }
-    this->commands[stoi(choose)]->execute(currentData);
-}
-
-void CLI::createCommands() {
-
-
 }
 
 //delete all the commands

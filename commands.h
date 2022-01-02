@@ -5,7 +5,6 @@
 
 #include<iostream>
 #include <string.h>
-
 #include <fstream>
 #include <vector>
 #include "HybridAnomalyDetector.h"
@@ -20,13 +19,16 @@ public:
 	virtual void write(float f)=0;
 	virtual void read(float* f)=0;
 	virtual ~DefaultIO(){}
+    virtual void closeDio() {
 
-	// you may add additional methods here
-    void readToFile(string fileName){
+    }
+
+    // you may add additional methods here
+    void readToFile(string fileName) {
         ofstream out(fileName);
-        string s="";
-        while((s=read())!="done"){
-            out<<s<<endl;
+        string s = "";
+        while ((s = read()) != "done") {
+            out << s << endl;
         }
         out.close();
     }
@@ -44,6 +46,7 @@ struct CurrentData{
     float threshold;
     vector<AnomalyReport> reports;
     vector<sharedReports> sReports;
+    int numberOfRows;
     CurrentData(){
         threshold=0.9;
     }
@@ -63,10 +66,12 @@ public:
 // implement here your command classes
 
 class UploadCSV:public Command{
+    public:
     UploadCSV(DefaultIO* dio): Command(dio){
         this->description = "upload a time series csv file";
     };
-    void execute(CurrentData* currentData) const {
+
+    void execute(CurrentData* currentData) {
         this->dio->write("Please upload your local train CSV file.\n");
         this->dio->readToFile("anomalyTrain.csv");
         this->dio->write("Upload complete\n");
@@ -77,11 +82,12 @@ class UploadCSV:public Command{
 };
 
 class algorithmSettings: public Command{
+    public:
     algorithmSettings(DefaultIO* dio): Command(dio){
         this->description = "algorithm settings\n";
     }
     void execute(CurrentData* currentData) {
-        this->dio->write("The current correlation threshold is " + to_string(currentData.threshold) +"\n");
+        this->dio->write("The current correlation threshold is " + to_string(currentData->threshold) +"\n");
         float choose;
         this->dio->read(&choose);
         if (choose > 0 || choose < 1){
@@ -94,6 +100,7 @@ class algorithmSettings: public Command{
 };
 
 class detectAnomalies: public Command{
+    public:
     detectAnomalies(DefaultIO* dio): Command(dio){
         this->description = "detect anomalies\n";
     }
@@ -103,6 +110,7 @@ class detectAnomalies: public Command{
         HybridAnomalyDetector hybridAnomalyDetector;
         hybridAnomalyDetector.setDefaultThreshold(currentData->threshold);
         hybridAnomalyDetector.learnNormal(timeSeries1);
+        currentData->numberOfRows = hybridAnomalyDetector.numberOfRows;
         currentData->reports = hybridAnomalyDetector.detect(timeSeries2);
         this->dio->write("anomaly detection complete\n");
     }
@@ -110,33 +118,36 @@ class detectAnomalies: public Command{
 
 
 class DisplayResults: public Command {
+    public:
     DisplayResults(DefaultIO* dio): Command(dio){
         this->description = "display results\n";
     }
     void execute(CurrentData* currentData) {
         for(int i=0; i< currentData->reports.size(); i++) {
-            this->dio->write(to_string(currentData.reports[i].timeStep) + "\t" + currentData.reports[i].description + "\n");
+            this->dio->write(to_string(currentData->reports[i].timeStep) + "\t" + currentData->reports[i].description + "\n");
         }
         this->dio->write("Done.\n");
     }
 };
 
+
 class analyzeResult: public Command {
-    analyzeResult(DefaultIO* dio): Command(dio){
+    public:
+    analyzeResult(DefaultIO *dio) : Command(dio) {
         this->description = "Please upload your local anomalies file.\n";
     }
 
-    void createSharedReports(CurrentData* currentData) {
+    void createSharedReports(CurrentData *currentData) {
         sharedReports sr;
         sr.description = "";
         sr.startTimeStep = 0;
         sr.endTimeStep = 0;
         sr.tp = false;
-        for(vector<AnomalyReport>::iterator it = currentData->reports.begin(); it != currentData->reports.end(); ++it) {
-            if (sr.description == it->description && it->timeStep+1 == sr.endTimeStep) {
+        for (vector<AnomalyReport>::iterator it = currentData->reports.begin();
+             it != currentData->reports.end(); ++it) {
+            if (sr.description == it->description && it->timeStep + 1 == sr.endTimeStep) {
                 sr.endTimeStep++;
-            }
-            else {
+            } else {
                 currentData->sReports.push_back(sr);
                 sr.description = it->description;
                 sr.startTimeStep = it->timeStep;
@@ -149,20 +160,24 @@ class analyzeResult: public Command {
     }
 
     bool OverlapTP(int start, int end, vector<sharedReports> sr) {
-        for(vector<sharedReports>::iterator it = sr.begin(); it != sr.end(); ++it) {
-            if (start >= it->startTimeStep )
+        for (vector<sharedReports>::iterator it = sr.begin(); it != sr.end(); ++it) {
+            if (start >= it->startTimeStep && end <= it->endTimeStep) {
+                it->tp = true;
+                return true;
+            }
+            if (start <= it->startTimeStep && end <= it->endTimeStep) {
+                it->tp = true;
+                return true;
+            }
+            if (start >= it->startTimeStep && end >= it->endTimeStep) {
+                it->tp = true;
+                return true;
+            }
         }
+        return false;
     }
 
-    /*
-     * 110-120
-     *
-     * 100-105
-     * 110-125
-     * 105-110
-     */
-
-    void execute(CurrentData* currentData) {
+    void execute(CurrentData *currentData) {
         createSharedReports(currentData);
 
         float p = 0;
@@ -172,16 +187,39 @@ class analyzeResult: public Command {
         while (line != "done\n") {
             int index = line.find(":");
             int start = stoi(line.substr(0, index));
-            int end = stoi (line.substr(index+1,line.length()));
-                if(OverlapTP(start,end,currentData->sReports))
-                    tp++;
-                sumOfInputLines+=end+1-start;
-                p++;
-            }
-
-
+            int end = stoi(line.substr(index + 1, line.length()));
+            if (OverlapTP(start, end, currentData->sReports))
+                tp++;
+            sumOfInputLines += end + 1 - start;
+            p++;
             line = dio->read();
         }
+        float tpP = tp / p;
+        int N = currentData->numberOfRows - sumOfInputLines;
+        float fpP = p-tp;
+        fpP = fpP / N;
+
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(3) << tpP;
+        std::string tpPStr = stream.str();
+
+        stream << std::fixed << std::setprecision(3) << fpP;
+        std::string fpPStr = stream.str();
+
+        this->dio->write("Upload complete.\n");
+        this->dio->write("True Positive Rate:" + tpPStr + "\n");
+        this->dio->write("False Positive Rate:" + fpPStr + "\n");
+    }
+};
+
+class endOfMenu: public Command {
+    public:
+    endOfMenu(DefaultIO* dio): Command(dio){
+        this->description = "exit\n";
+    }
+    void execute(CurrentData* currentData) {
+        this->dio->closeDio();
+    }
 };
 
 class StandardIO:public DefaultIO {
@@ -192,6 +230,10 @@ class StandardIO:public DefaultIO {
     }
     void write(float f) {
         cout << "" << f;
+    }
+
+    void closeDio() {
+        return;
     }
 };
 

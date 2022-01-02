@@ -12,6 +12,10 @@ void SimpleAnomalyDetector::setDefaultThreshold(float newThreshold){
     this->defaultThreshold = newThreshold;
 }
 
+void SimpleAnomalyDetector::setNumberOfRows(int number) {
+    this->numberOfRows = number;
+}
+
 /*
  * convert the vectors of the two correlated fetters into Points array.
  */
@@ -57,6 +61,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries& ts) {
     vector<string> vectorOfFeatures = ts.getFeatures();
     int numberOfFeatures = vectorOfFeatures.size();
     int sizeOfVector = data[vectorOfFeatures[1]].size(); //size of the rows.
+    this->setNumberOfRows(sizeOfVector);
     Point** pointArr;
 
     /*

@@ -24,7 +24,9 @@ protected:
     vector<correlatedFeatures> cf;
     float defaultThreshold = 0.9;
 
+
 public:
+    int numberOfRows;
 	SimpleAnomalyDetector();
 	virtual ~SimpleAnomalyDetector();
 	virtual void learnNormal(const TimeSeries& ts);
@@ -33,6 +35,7 @@ public:
 		return cf;
 	}
     void setDefaultThreshold(float newThreshold);
+    void setNumberOfRows(int number);
 
 protected:
     float maxOffset(Point** pointArr, int sizeOfVector, Line lin_reg);

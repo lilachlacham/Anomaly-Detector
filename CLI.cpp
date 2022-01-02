@@ -13,19 +13,20 @@ CLI::CLI(DefaultIO* dio) {
 
 void CLI::start() {
     CurrentData currentData;
-    string startOfMenu = "Welcome to the Anomaly Detection Server.\n Please choose an option:\n";
-    this->dio->write(startOfMenu);
     int numOfCommands = commands.size();
     while(true) {
+        string startOfMenu = "Welcome to the Anomaly Detection Server.\nPlease choose an option:\n";
+        this->dio->write(startOfMenu);
         for (int i = 0; i < numOfCommands; i++) {
-            string commandToPrint = to_string((i + 1)) + ". " + this->commands[i]->description + "\n";
+            string commandToPrint = to_string((i + 1)) + "." + this->commands[i]->description;
+            dio->write(commandToPrint);
         }
         string choose = dio->read();
         if (choose > "6" || choose < "1") {
-            this->commands[6]->execute(&currentData);
+            this->commands[5]->execute(&currentData);
         }
         int intChoose = stoi(choose);
-        this->commands[intChoose]->execute(&currentData);
+        this->commands[intChoose-1]->execute(&currentData);
         if (intChoose == 6) {
             break;
         }

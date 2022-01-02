@@ -68,16 +68,16 @@ public:
 class UploadCSV:public Command{
     public:
     UploadCSV(DefaultIO* dio): Command(dio){
-        this->description = "upload a time series csv file";
+        this->description = "upload a time series csv file\n";
     };
 
     void execute(CurrentData* currentData) {
         this->dio->write("Please upload your local train CSV file.\n");
         this->dio->readToFile("anomalyTrain.csv");
-        this->dio->write("Upload complete\n");
+        this->dio->write("Upload complete.\n");
         this->dio->write("Please upload your local test CSV file.\n");
         this->dio->readToFile("anomalyTest.csv");
-        this->dio->write("Upload complete\n");
+        this->dio->write("Upload complete.\n");
     }
 };
 
@@ -88,6 +88,7 @@ class algorithmSettings: public Command{
     }
     void execute(CurrentData* currentData) {
         this->dio->write("The current correlation threshold is " + to_string(currentData->threshold) +"\n");
+        this->dio->write("Type a new threshold\n");
         float choose;
         this->dio->read(&choose);
         if (choose > 0 || choose < 1){
@@ -112,7 +113,7 @@ class detectAnomalies: public Command{
         hybridAnomalyDetector.learnNormal(timeSeries1);
         currentData->numberOfRows = hybridAnomalyDetector.numberOfRows;
         currentData->reports = hybridAnomalyDetector.detect(timeSeries2);
-        this->dio->write("anomaly detection complete\n");
+        this->dio->write("anomaly detection complete.\n");
     }
 };
 
@@ -134,7 +135,7 @@ class DisplayResults: public Command {
 class analyzeResult: public Command {
     public:
     analyzeResult(DefaultIO *dio) : Command(dio) {
-        this->description = "Please upload your local anomalies file.\n";
+        this->description = "upload anomalies and analyze results\n";
     }
 
     void createSharedReports(CurrentData *currentData) {
@@ -161,15 +162,7 @@ class analyzeResult: public Command {
 
     bool OverlapTP(int start, int end, vector<sharedReports> sr) {
         for (vector<sharedReports>::iterator it = sr.begin(); it != sr.end(); ++it) {
-            if (start >= it->startTimeStep && end <= it->endTimeStep) {
-                it->tp = true;
-                return true;
-            }
-            if (start <= it->startTimeStep && end <= it->endTimeStep) {
-                it->tp = true;
-                return true;
-            }
-            if (start >= it->startTimeStep && end >= it->endTimeStep) {
+            if (end >= it->startTimeStep && start <= it->endTimeStep) {
                 it->tp = true;
                 return true;
             }
@@ -178,14 +171,16 @@ class analyzeResult: public Command {
     }
 
     void execute(CurrentData *currentData) {
+        this->dio->write("Please upload your local anomalies file.\n");
         createSharedReports(currentData);
 
         float p = 0;
-        int tp = 0;
+        float tp = 0;
+        float fp = 0;
         int sumOfInputLines = 0;
         string line = dio->read();
-        while (line != "done\n") {
-            int index = line.find(":");
+        while (line != "done") {
+            int index = line.find(",");
             int start = stoi(line.substr(0, index));
             int end = stoi(line.substr(index + 1, line.length()));
             if (OverlapTP(start, end, currentData->sReports))
@@ -194,21 +189,21 @@ class analyzeResult: public Command {
             p++;
             line = dio->read();
         }
-        float tpP = tp / p;
-        int N = currentData->numberOfRows - sumOfInputLines;
-        float fpP = p-tp;
-        fpP = fpP / N;
 
-        std::stringstream stream;
-        stream << std::fixed << std::setprecision(3) << tpP;
-        std::string tpPStr = stream.str();
-
-        stream << std::fixed << std::setprecision(3) << fpP;
-        std::string fpPStr = stream.str();
+        for(int i = 0; i < currentData->sReports.size();i++)
+            if(!currentData->sReports[i].tp)
+                fp++;
+        float tpP = ((int)(1000.0*tp/p))/1000.0f;
+        float N = currentData->numberOfRows - sumOfInputLines;
+        float fpP = ((int)(1000.0*fp/N))/1000.0f;
 
         this->dio->write("Upload complete.\n");
-        this->dio->write("True Positive Rate:" + tpPStr + "\n");
-        this->dio->write("False Positive Rate:" + fpPStr + "\n");
+        this->dio->write("True Positive Rate: ");
+        this->dio->write(tpP);
+        this->dio->write("\n");
+        this->dio->write("False Positive Rate: ");
+        this->dio->write(fpP);
+        this->dio->write("\n");
     }
 };
 
@@ -221,7 +216,7 @@ class endOfMenu: public Command {
         this->dio->closeDio();
     }
 };
-
+/*
 class StandardIO:public DefaultIO {
     StandardIO(): DefaultIO(){};
 
@@ -231,10 +226,12 @@ class StandardIO:public DefaultIO {
     void write(float f) {
         cout << "" << f;
     }
+    string read() {
 
+    }
     void closeDio() {
         return;
     }
-};
+};*/
 
 #endif /* COMMANDS_H_ */

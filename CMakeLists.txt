@@ -20,4 +20,6 @@ add_executable(Anomaly_Detector MainTrain.cpp
         CLI.cpp
         CLI.h
         commands.h
+        input.txt
+        expectedOutput.txt
         )

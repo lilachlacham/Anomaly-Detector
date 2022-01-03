@@ -1,4 +1,4 @@
-
+//Author: 207375700 Racheli Lilach Lacham
 
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
@@ -26,15 +26,15 @@ public:
     // you may add additional methods here
     void readToFile(string fileName) {
         ofstream out(fileName);
-        string s = "";
-        while ((s = read()) != "done") {
+        string s = read();
+        while (s  != "done") {
             out << s << endl;
+            s = read();
         }
         out.close();
     }
 };
 
-// you may add here helper classes
 struct sharedReports{
     int startTimeStep;
     int endTimeStep;
@@ -91,11 +91,11 @@ class algorithmSettings: public Command{
         this->dio->write("Type a new threshold\n");
         float choose;
         this->dio->read(&choose);
-        if (choose > 0 || choose < 1){
+        if (choose > 0 && choose <= 1){
             currentData->threshold = choose;
             return;
         }
-        this->dio->write("please choose a value between o and 1\n");
+        this->dio->write("please choose a value between 0 and 1.\n");
         execute(currentData);
     }
 };
@@ -105,14 +105,35 @@ class detectAnomalies: public Command{
     detectAnomalies(DefaultIO* dio): Command(dio){
         this->description = "detect anomalies\n";
     }
+    void createSharedReports(CurrentData* currentData) {
+        sharedReports sr;
+        sr.description = "";
+        sr.startTimeStep = 0;
+        sr.endTimeStep = 0;
+        sr.tp = false;
+        for(int i = 0; i < currentData->reports.size();i++) {
+            if (sr.description == currentData->reports[i].description && currentData->reports[i].timeStep == sr.endTimeStep +1) {
+                sr.endTimeStep++;
+            } else {
+                currentData->sReports.push_back(sr);
+                sr.description = currentData->reports[i].description;
+                sr.startTimeStep = currentData->reports[i].timeStep;
+                sr.endTimeStep = sr.startTimeStep;
+            }
+        }
+        currentData->sReports.push_back(sr);
+        currentData->sReports.erase(currentData->sReports.begin());
+    }
+
     void execute(CurrentData* currentData) {
         TimeSeries timeSeries1 = TimeSeries("anomalyTrain.csv");
         TimeSeries timeSeries2 = TimeSeries("anomalyTest.csv");
         HybridAnomalyDetector hybridAnomalyDetector;
         hybridAnomalyDetector.setDefaultThreshold(currentData->threshold);
         hybridAnomalyDetector.learnNormal(timeSeries1);
-        currentData->numberOfRows = hybridAnomalyDetector.numberOfRows;
         currentData->reports = hybridAnomalyDetector.detect(timeSeries2);
+        currentData->numberOfRows = hybridAnomalyDetector.numberOfRows;
+        createSharedReports(currentData);
         this->dio->write("anomaly detection complete.\n");
     }
 };
@@ -124,7 +145,7 @@ class DisplayResults: public Command {
         this->description = "display results\n";
     }
     void execute(CurrentData* currentData) {
-        for(int i=0; i< currentData->reports.size(); i++) {
+        for(int i=0; i < currentData->reports.size(); i++) {
             this->dio->write(to_string(currentData->reports[i].timeStep) + "\t" + currentData->reports[i].description + "\n");
         }
         this->dio->write("Done.\n");
@@ -138,32 +159,10 @@ class analyzeResult: public Command {
         this->description = "upload anomalies and analyze results\n";
     }
 
-    void createSharedReports(CurrentData *currentData) {
-        sharedReports sr;
-        sr.description = "";
-        sr.startTimeStep = 0;
-        sr.endTimeStep = 0;
-        sr.tp = false;
-        for (vector<AnomalyReport>::iterator it = currentData->reports.begin();
-             it != currentData->reports.end(); ++it) {
-            if (sr.description == it->description && it->timeStep + 1 == sr.endTimeStep) {
-                sr.endTimeStep++;
-            } else {
-                currentData->sReports.push_back(sr);
-                sr.description = it->description;
-                sr.startTimeStep = it->timeStep;
-                sr.endTimeStep = sr.startTimeStep;
-                sr.tp = false;
-            }
-        }
-        currentData->sReports.push_back(sr);
-        currentData->sReports.erase(currentData->sReports.begin());
-    }
-
-    bool OverlapTP(int start, int end, vector<sharedReports> sr) {
-        for (vector<sharedReports>::iterator it = sr.begin(); it != sr.end(); ++it) {
-            if (end >= it->startTimeStep && start <= it->endTimeStep) {
-                it->tp = true;
+    bool OverlapTP(int start, int end, CurrentData* currentData) {
+        for(int i = 0; i < currentData->sReports.size();i++) {
+            if (end >= currentData->sReports[i].startTimeStep && start <= currentData->sReports[i].endTimeStep) {
+                currentData->sReports[i].tp = true;
                 return true;
             }
         }
@@ -172,7 +171,9 @@ class analyzeResult: public Command {
 
     void execute(CurrentData *currentData) {
         this->dio->write("Please upload your local anomalies file.\n");
-        createSharedReports(currentData);
+        for(int i=0;i<currentData->sReports.size();i++){
+            currentData->sReports[i].tp=false;
+        }
 
         float p = 0;
         float tp = 0;
@@ -183,18 +184,20 @@ class analyzeResult: public Command {
             int index = line.find(",");
             int start = stoi(line.substr(0, index));
             int end = stoi(line.substr(index + 1, line.length()));
-            if (OverlapTP(start, end, currentData->sReports))
+            if (OverlapTP(start, end, currentData))
                 tp++;
             sumOfInputLines += end + 1 - start;
             p++;
             line = dio->read();
         }
 
-        for(int i = 0; i < currentData->sReports.size();i++)
-            if(!currentData->sReports[i].tp)
+        for(int i = 0; i < currentData->sReports.size();i++) {
+            if(currentData->sReports[i].tp == false)
                 fp++;
-        float tpP = ((int)(1000.0*tp/p))/1000.0f;
+        }
+
         float N = currentData->numberOfRows - sumOfInputLines;
+        float tpP = ((int)(1000.0*tp/p))/1000.0f;
         float fpP = ((int)(1000.0*fp/N))/1000.0f;
 
         this->dio->write("Upload complete.\n");

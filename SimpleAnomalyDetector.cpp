@@ -1,10 +1,8 @@
-//Author: 315097113 Noam Pdut
+//Author: 207375700 Racheli Lilach Lacham
 #include "SimpleAnomalyDetector.h"
 #include <map>
 
-SimpleAnomalyDetector::SimpleAnomalyDetector() {
-
-}
+SimpleAnomalyDetector::SimpleAnomalyDetector() {}
 
 SimpleAnomalyDetector::~SimpleAnomalyDetector() {}
 
@@ -61,7 +59,7 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries& ts) {
     vector<string> vectorOfFeatures = ts.getFeatures();
     int numberOfFeatures = vectorOfFeatures.size();
     int sizeOfVector = data[vectorOfFeatures[1]].size(); //size of the rows.
-    this->setNumberOfRows(sizeOfVector);
+    //this->setNumberOfRows(sizeOfVector);
     Point** pointArr;
 
     /*
@@ -88,10 +86,6 @@ void SimpleAnomalyDetector::learnNormal(const TimeSeries& ts) {
         createCorreletedFeature(ts, sizeOfVector, m, c, vectorOfFeatures[i], vectorOfFeatures[c], pointArr);
         deletePoint(pointArr, sizeOfVector);
     }
-    //update the thresholds of every correlated features.
-    //SimpleAnomalyDetector::maxOffset(ts);
-    //delete the points array.
-    //deletePoint(pointArr, sizeOfVector);
 }
 
 bool SimpleAnomalyDetector::checkIfAnomalous(float x, float y, correlatedFeatures tempCF) {
@@ -108,6 +102,7 @@ vector<AnomalyReport> SimpleAnomalyDetector::detect(const TimeSeries& ts) {
     map<string,vector<float>> data= ts.getMap();
     vector<string> vectorOfFeatures = ts.getFeatures();
     int sizeOfVector = data[vectorOfFeatures[1]].size(); //number of rows
+    this->setNumberOfRows(sizeOfVector);
     vector<AnomalyReport> reportsVector;
 
     //run over all the lines.
@@ -141,34 +136,4 @@ float SimpleAnomalyDetector::maxOffset(Point** pointArr, int sizeOfVector, Line 
     }
     return maxOffset;
 }
-/*
- * for every two correlated features, get the max offset.
- */
-/*
-void SimpleAnomalyDetector::maxOffset(const TimeSeries& ts) {
-    map<string,vector<float>> data= ts.getMap();
-    vector<string> vectorOfFeatures = ts.getFeatures();
-    // the number of the correlated features in cf.
-    int numOfCorreletedFeatures = cf.size();
-    // the number of the rows.
-    int sizeOfVector = data[vectorOfFeatures[1]].size();
-    float maxNormalOffset = 0;
-    // go over the correlated features and calculate the max normal offset.
-    for (int i = 0; i < numOfCorreletedFeatures; i++) {
-        if (cf[i].flag) {
-            continue;
-        }
-        for(int j = 0; j < sizeOfVector; j++) {
-            float x = data[cf[i].feature1][j];
-            float y = data[cf[i].feature2][j];
-            // get the current offset
-            float temp = abs(y-cf[i].lin_reg.f(x));
-            // check if the current offset is higher than the max.
-            if (temp > maxNormalOffset) {
-                maxNormalOffset = temp;
-            }
-            // update the threshold.
-            cf[i].threshold = maxNormalOffset * 1.1;
-        }
-    }
-}*/
+

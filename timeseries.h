@@ -1,4 +1,4 @@
-//Author: 315097113 Noam Pdut
+//Author: 207375700 Racheli Lilach Lacham
 
 #ifndef TIMESERIES_H_
 #define TIMESERIES_H_

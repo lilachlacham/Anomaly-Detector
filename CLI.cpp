@@ -1,5 +1,5 @@
+//Author: 207375700 Racheli Lilach Lacham
 #include "CLI.h"
-
 
 CLI::CLI(DefaultIO* dio) {
     this->dio = dio;
@@ -35,6 +35,8 @@ void CLI::start() {
 
 //delete all the commands
 CLI::~CLI() {
-
+    for (int i = 0; i< this->commands.size(); i++){
+        delete commands[i];
+    }
 }
 

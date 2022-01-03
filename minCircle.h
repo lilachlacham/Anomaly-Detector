@@ -1,4 +1,4 @@
-//Author: 315097113 Noam Pdut
+//Author: 207375700 Racheli Lilach Lacham
 #ifndef MINCIRCLE_H_
 #define MINCIRCLE_H_
 
@@ -10,21 +10,16 @@
 
 using namespace std;
 
-
-// ------------ DO NOT CHANGE -----------
-
 class Circle{
 public:
 	Point center;
 	float radius;
 	Circle(Point c,float r):center(c),radius(r){}
 };
-// --------------------------------------
 
 Circle findMinCircle(Point** points,size_t size);
 bool ifPointIsInCircle (Circle circle, Point* point);
 float calcDistance(Point p1, Point p2);
 
-// you can add here additional methods
 
 #endif /* MINCIRCLE_H_ */

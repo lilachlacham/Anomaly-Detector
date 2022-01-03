@@ -1,4 +1,4 @@
-//Author: 315097113 Noam Pdut
+//Author: 207375700 Racheli Lilach Lacham
 
 #ifndef SIMPLEANOMALYDETECTOR_H_
 #define SIMPLEANOMALYDETECTOR_H_
@@ -18,12 +18,10 @@ struct correlatedFeatures{
     float x,y;
 };
 
-
 class SimpleAnomalyDetector:public TimeSeriesAnomalyDetector{
 protected:
     vector<correlatedFeatures> cf;
     float defaultThreshold = 0.9;
-
 
 public:
     int numberOfRows;
@@ -43,7 +41,5 @@ protected:
                                                         Point** pointArr);
     virtual bool checkIfAnomalous(float x, float y, correlatedFeatures tempCF);
 };
-
-
 
 #endif /* SIMPLEANOMALYDETECTOR_H_ */

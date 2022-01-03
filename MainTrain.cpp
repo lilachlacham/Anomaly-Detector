@@ -79,11 +79,11 @@ void check(string outputFile,string expectedOutputFile){
 
  //small test
 int main(){
-	STDtest std("inputEli.txt","output.txt");
+	STDtest std("input.txt","output.txt");
 	CLI cli(&std);
 	cli.start();
 	std.close();
-	check("output.txt","expectedOutputEli.txt");
+	check("output.txt","expectedOutput.txt");
 	cout<<"done"<<endl;
 	return 0;
 }

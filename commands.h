@@ -19,9 +19,7 @@ public:
 	virtual void write(float f)=0;
 	virtual void read(float* f)=0;
 	virtual ~DefaultIO(){}
-    virtual void closeDio() {
-
-    }
+    virtual void closeDio() {}
 
     // you may add additional methods here
     void readToFile(string fileName) {
@@ -87,7 +85,9 @@ class algorithmSettings: public Command{
         this->description = "algorithm settings\n";
     }
     void execute(CurrentData* currentData) {
-        this->dio->write("The current correlation threshold is " + to_string(currentData->threshold) +"\n");
+        this->dio->write("The current correlation threshold is ");
+        this->dio->write(currentData->threshold);
+        this->dio->write("\n");
         this->dio->write("Type a new threshold\n");
         float choose;
         this->dio->read(&choose);

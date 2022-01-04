@@ -14,12 +14,12 @@ using namespace std;
 
 class DefaultIO{
 public:
+    DefaultIO(){}
 	virtual string read()=0;
 	virtual void write(string text)=0;
 	virtual void write(float f)=0;
 	virtual void read(float* f)=0;
 	virtual ~DefaultIO(){}
-    virtual void closeDio() {}
 
     // you may add additional methods here
     void readToFile(string fileName) {
@@ -216,7 +216,7 @@ class endOfMenu: public Command {
         this->description = "exit\n";
     }
     void execute(CurrentData* currentData) {
-        this->dio->closeDio();
+
     }
 };
 /*

@@ -3,7 +3,7 @@
 
 Server::Server(int port)throw (const char*) {
     this->stopped = false;
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (serverSocket < 0) {
         throw ("socket failed.");
     }
@@ -20,28 +20,22 @@ Server::Server(int port)throw (const char*) {
     }
 }
 
-void sigHandler(int sigNum){
-    cout<<"sidH"<<endl;
-}
-
 void Server::start(ClientHandler& ch)throw(const char*) {
     this->t = new thread([&ch, this](){
-        signal(SIGALRM,sigHandler);
             while(!this->stopped) {
-                alarm(1);
+                this->clientStruct = {};
                 socklen_t sizeClient = sizeof(this->clientStruct);
                 int clientId = accept(this->serverSocket, (struct sockaddr*)&this->clientStruct,&sizeClient);
                 if (clientId > 0) {
                     ch.handle(clientId);
                     close(clientId);
                 }
-                alarm(0);
             }
         close(this->serverSocket);
     });
 }
 
-void Server::stop(){
+void Server::stop() {
     this->stopped = true;
 	this->t->join(); // do not delete this!
 }

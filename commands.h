@@ -25,7 +25,7 @@ public:
     void readToFile(string fileName) {
         ofstream out(fileName);
         string s = read();
-        while (s  != "done") {
+        while (s != "done\n") {
             out << s << endl;
             s = read();
         }
@@ -180,7 +180,7 @@ class analyzeResult: public Command {
         float fp = 0;
         int sumOfInputLines = 0;
         string line = dio->read();
-        while (line != "done") {
+        while (line != "done\n") {
             int index = line.find(",");
             int start = stoi(line.substr(0, index));
             int end = stoi(line.substr(index + 1, line.length()));
@@ -215,9 +215,7 @@ class endOfMenu: public Command {
     endOfMenu(DefaultIO* dio): Command(dio){
         this->description = "exit\n";
     }
-    void execute(CurrentData* currentData) {
-
-    }
+    void execute(CurrentData* currentData) {}
 };
 /*
 class StandardIO:public DefaultIO {

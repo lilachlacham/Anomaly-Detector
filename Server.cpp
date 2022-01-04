@@ -1,44 +1,49 @@
 
 #include "Server.h"
-#include <stdio.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#define SA struct sockaddr
 
 Server::Server(int port)throw (const char*) {
     this->stopped = false;
-    int sock;
-    struct sockaddr_in servAddr;
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1) {
-        throw ("socket failed.\n");
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket < 0) {
+        throw ("socket failed.");
     }
 
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servAddr.sin_port = htons(port);
+    this->serverStruct.sin_family = AF_INET;
+    this->serverStruct.sin_addr.s_addr =INADDR_ANY;
+    this->serverStruct.sin_port = htons(port);
 
-    if ((bind(sock, (SA*)&servAddr, sizeof(servAddr))) != 0) {
-        throw ("socket bind failed.\n");
+    if (bind(serverSocket, (struct sockaddr*)&serverStruct, sizeof(serverStruct)) < 0) {
+        throw ("socket bind failed.");
     }
-    if (listen(sock, 3) !=0){
-        throw ("socket listen failed\n");
+    if (listen(serverSocket, 3) < 0){
+        throw ("socket listen failed");
     }
-    this->serverSocket = sock;
+}
+
+void sigHandler(int sigNum){
+    cout<<"sidH"<<endl;
 }
 
 void Server::start(ClientHandler& ch)throw(const char*) {
-    
+    this->t = new thread([&ch, this](){
+        signal(SIGALRM,sigHandler);
+            while(!this->stopped) {
+                alarm(1);
+                socklen_t sizeClient = sizeof(this->clientStruct);
+                int clientId = accept(this->serverSocket, (struct sockaddr*)&this->clientStruct,&sizeClient);
+                if (clientId > 0) {
+                    ch.handle(clientId);
+                    close(clientId);
+                }
+                alarm(0);
+            }
+        close(this->serverSocket);
+    });
 }
 
 void Server::stop(){
     this->stopped = true;
-	t->join(); // do not delete this!
+	this->t->join(); // do not delete this!
 }
 
 Server::~Server() {}
@@ -55,21 +60,27 @@ string socketIO:: read() {
 
 void socketIO::write(string text) {
     const char* buffer = text.c_str();
-    send(this->clientId,buffer,text.length(), 0);
-    return;
+    send(this->clientId,buffer,strlen(buffer), 0);
 }
 
-void socketIO::write(float f) {
+/*void socketIO::write(float f) {
     string str = to_string(f);
     write(str);
+}*/
+
+void socketIO::write(float f){
+    ostringstream ss;
+    ss <<f;
+    string s(ss.str());
+    write(s);
 }
 
 void socketIO:: read(float* f) {
-    recv(this->clientId, &f, sizeof(float), 0);
+    recv(this->clientId, f, sizeof(float), 0);
 }
 
 void AnomalyDetectionHandler::handle(int clientID) {
-    socketIO sio = socketIO(clientID);
-    CLI cli = CLI(&sio);
+    socketIO sio(clientID);
+    CLI cli(&sio);
     cli.start();
 }

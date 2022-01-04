@@ -8,12 +8,25 @@
 #ifndef SERVER_H_
 #define SERVER_H_
 #include "CLI.h"
+#include <netinet/in.h>
+#include <stdio.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <iostream>
+#include <pthread.h>
+#include <thread>
+#include <unistd.h>
+#include<signal.h>
+#include <sstream>
 
 
 using namespace std;
 class socketIO:public DefaultIO{
     int clientId;
-    int clientToHandle;
+
 public:
     socketIO(int clientId):DefaultIO(){this->clientId = clientId;}
     virtual string read();
@@ -28,7 +41,6 @@ class ClientHandler{
     virtual void handle(int clientID)=0;
 };
 
-
 // edit your AnomalyDetectionHandler class here
 class AnomalyDetectionHandler:public ClientHandler{
 	public:
@@ -41,6 +53,8 @@ class Server {
     bool stopped;
     int serverSocket;
 	thread* t; // the thread to run the start() method in
+    sockaddr_in serverStruct;
+    sockaddr_in clientStruct;
 
 	// you may add data members
 
@@ -49,6 +63,10 @@ public:
 	virtual ~Server();
 	void start(ClientHandler& ch)throw(const char*);
 	void stop();
+    void connectToClient(ClientHandler& ch, Server server);
+    bool getStopped();
+    sockaddr_in getStructClient();
+    int getServerSocket();
 };
 
 #endif /* SERVER_H_ */

@@ -1,4 +1,4 @@
-//Author: 207375700 Racheli Lilach Lacham
+//Author: 315097113 Noam Pdut
 #include "minCircle.h"
 #include <cstdlib>
 #include <cmath>

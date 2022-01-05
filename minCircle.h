@@ -1,4 +1,4 @@
-//Author: 207375700 Racheli Lilach Lacham
+//Author: 315097113 Noam Pdut
 #ifndef MINCIRCLE_H_
 #define MINCIRCLE_H_
 

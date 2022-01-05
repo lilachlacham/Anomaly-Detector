@@ -1,8 +1,7 @@
-
+//Author: 315097113 Noam Pdut
 #include "Server.h"
 
 Server::Server(int port)throw (const char*) {
-    this->stopped = false;
     serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (serverSocket < 0) {
         throw ("socket failed.");
@@ -15,9 +14,10 @@ Server::Server(int port)throw (const char*) {
     if (bind(serverSocket, (struct sockaddr*)&serverStruct, sizeof(serverStruct)) < 0) {
         throw ("socket bind failed.");
     }
-    if (listen(serverSocket, 3) < 0){
+    if (listen(serverSocket, 3) < 0) {
         throw ("socket listen failed");
     }
+    this->stopped = false;
 }
 
 void Server::start(ClientHandler& ch)throw(const char*) {
@@ -43,13 +43,13 @@ void Server::stop() {
 Server::~Server() {}
 
 string socketIO:: read() {
-    char c = 0;
-    string s = "";
-    while (c != '\n') {
-        recv(this->clientId, &c, sizeof(char), 0);
-        s+=c;
+    char currentChar = 0;
+    string str = "";
+    while (currentChar != '\n') {
+        recv(this->clientId, &currentChar, sizeof(char), 0);
+        str+=currentChar;
     }
-    return s;
+    return str;
 }
 
 void socketIO::write(string text) {
@@ -57,16 +57,12 @@ void socketIO::write(string text) {
     send(this->clientId,buffer,strlen(buffer), 0);
 }
 
-/*void socketIO::write(float f) {
-    string str = to_string(f);
-    write(str);
-}*/
 
 void socketIO::write(float f){
-    ostringstream ss;
-    ss <<f;
-    string s(ss.str());
-    write(s);
+    ostringstream sStream;
+    sStream << f;
+    string str(sStream.str());
+    write(str);
 }
 
 void socketIO:: read(float* f) {

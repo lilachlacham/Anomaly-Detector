@@ -1,10 +1,9 @@
-//Author: 207375700 Racheli Lilach Lacham
+//Author: 315097113 Noam Pdut
 
 #ifndef COMMANDS_H_
 #define COMMANDS_H_
 
 #include<iostream>
-#include <string.h>
 #include <fstream>
 #include <vector>
 #include "HybridAnomalyDetector.h"
